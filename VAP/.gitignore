@@ -1,0 +1,49 @@
+# Ignore Visual Studio files
+.vs/
+
+# Ignore build output
+/bin/
+/obj/
+
+# Ignore NuGet package directory
+/packages/
+
+# Ignore user-specific files
+*.suo
+*.user
+*.userprefs
+*.lock.json
+
+# Ignore IDE and editor specific files
+*.vscode/
+*.sln
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Ignore build server directories
+_TeamCity/
+_ReSharper.*
+
+# Ignore SQL Server files
+*.mdf
+*.ldf
+
+# Ignore Mac-specific files
+.DS_Store
+
+# Ignore log files and others
+*.log
+*.sqlite
+*.sqlite3
+
+# Ignore backup files
+*~
+
+# Ignore generated client-side assets
+wwwroot/lib/
+
+# Ignore Node.js dependencies
+node_modules/
+
