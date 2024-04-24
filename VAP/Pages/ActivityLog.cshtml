@@ -1,0 +1,33 @@
+﻿@page
+@model VAP.Pages.ActivityLogModel
+@{
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Activity Log</title>
+    <style>
+        .log-entry {
+            margin-bottom: 10px;
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Activity Log</h1>
+    <!-- Reverse the order of activity log entries and render as formatted sentences -->
+    @foreach (var entry in Model.ActivityLogs)
+    {
+        <div class="log-entry">
+            On 
+            <span>@entry.Timestamp.ToString("yyyy-MM-dd HH:mm:ss") : </span>
+            <span>@entry.User</span> updated the detection[s] - 
+            <span>@entry.DetectionIds</span> status to
+            <span>"@entry.Action"</span>
+        </div>
+    }
+</body>
+</html>

@@ -60,36 +60,75 @@ namespace VAP.Pages
             var dets = await GetDetectionsFromDatabase(dateFrom!, dateTo);
             Detections = dets.Where(d => d.DetectionCheck == detectionCheckFilter).ToList();
         }
-        public async Task<IActionResult> OnPostUpdateStatusAsync(int detectionId)
+        public async Task<IActionResult> OnPostUpdateStatusAsync(int? detectionId, string? selectedIds)
         {
             string query = "UPDATE PPEDetectionTest SET DetectionCheck = @Status WHERE DetectionId = @DetectionId";
 
             string nullQuery = "UPDATE PPEDetectionTest SET DetectionCheck = NULL WHERE DetectionId = @DetectionId";
 
+            var detectionIds = !string.IsNullOrEmpty(selectedIds)
+     ? selectedIds.Split(',').Select(int.Parse).ToArray()
+     : detectionId != null ? new int[] { detectionId.Value } : [];
+
             int? status = NewStatus == "Alert" ? 1 : (NewStatus == "Not Alert" ? 0 : null);
 
-            using (SqlConnection connection = new SqlConnection(configuration["ConnectionString:SqlServer"]))
+            using (SqlConnection connection = new SqlConnection(configuration["ConnectionString:Sql"]))
             {
                 await connection.OpenAsync();
 
                 SqlCommand command = new SqlCommand(status == null ? nullQuery : query, connection);
-                command.Parameters.AddWithValue("@Status", status);
-                command.Parameters.AddWithValue("@DetectionId", detectionId);
+                if (status != null) command.Parameters.AddWithValue("@Status", status);
 
-                await command.ExecuteNonQueryAsync();
+                foreach (int dId in detectionIds)
+                {
+                    command.Parameters.AddWithValue("@DetectionId", dId);
+                    await command.ExecuteNonQueryAsync();
+                    command.Parameters.RemoveAt("@DetectionId");
+                }
             }
 
-            detectionStore.UpdateStatus(detectionId, NewStatus!);
+            foreach (var dId in detectionIds)
+            {
+                detectionStore.UpdateStatus(dId, NewStatus!);
+            }
+
+            await LogActivityAsync(User.Identity!.Name!, NewStatus!, detectionIds);
 
             return RedirectToPage("Index");
         }
+
+        private async Task LogActivityAsync(string? user, string action, int[]? detectionIds)
+        {
+            string connectionString = configuration["ConnectionString:Sql"]!;
+            string query = "INSERT INTO ActivityLog (Timestamp, [User], Action, DetectionIds) VALUES (@Timestamp, @User, @Action, @DetectionIds)";
+            try
+            {
+
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    SqlCommand command = new SqlCommand(query, connection);
+                    command.Parameters.AddWithValue("@Timestamp", DateTime.UtcNow);
+                    command.Parameters.AddWithValue("@User", user);
+                    command.Parameters.AddWithValue("@Action", action);
+                    command.Parameters.AddWithValue("@DetectionIds", string.Join(",", detectionIds!));
+
+                    await connection.OpenAsync();
+                    await command.ExecuteNonQueryAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+            }
+        }
+
         private async Task<List<Detection>> GetDetectionsFromDatabase(string dateFrom, string dateTo)
         {
             var FetchedDetections = new List<Detection>();
 
             string query = $"SELECT CameraSerial, Class, DetectionId, DetectionUnixEpoch, DetectionDateTime, DetectionCheck, DetectionImageUrl FROM PPEDetectionTest WHERE CAST(DetectionDateTime as DATE) BETWEEN '{dateFrom}' AND '{dateTo}'";
 
-            using (SqlConnection connection = new SqlConnection(configuration["ConnectionString:SqlServer"]))
+            using (SqlConnection connection = new SqlConnection(configuration["ConnectionString:Sql"]))
             {
                 SqlCommand command = new SqlCommand(query, connection);
 
@@ -150,6 +189,8 @@ namespace VAP.Pages
                     return "No Helmet";
                 case 6 or 7:
                     return "Drum on Floor";
+                case 50:
+                    return "Less People Count";
                 default:
                     return "Unknown";
             }

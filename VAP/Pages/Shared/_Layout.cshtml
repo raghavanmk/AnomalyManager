@@ -12,7 +12,20 @@
     <header>
         <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
             <div class="container">
-                <a class="navbar-brand" asp-area="" asp-page="/Login">Detroit Site Meraki Violations</a>
+                    @if (User.Identity.IsAuthenticated)
+                    {
+                        <div style="display: flex;">
+                            <a class="navbar-brand" asp-area="" asp-page="/Index">Detroit Site Meraki Violations</a>
+                            <a class="nav-link text-dark" asp-area="" asp-page="/ActivityLog">Logs</a>
+                        </div>
+                        
+                         <a class="nav-link text-dark" asp-area="" asp-page="/Logout">Logout</a>
+
+                    }
+                    else
+                    {
+                        <a class="navbar-brand" asp-area="" asp-page="/Login">Detroit Site Meraki Violations</a>
+                    }
             </div>
         </nav>
     </header>
@@ -21,12 +34,6 @@
             @RenderBody()
         </main>
     </div>
-
-   @*  <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2024 - VAP - <a asp-area="" asp-page="/Privacy">Privacy</a>
-        </div>
-    </footer *@>
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>

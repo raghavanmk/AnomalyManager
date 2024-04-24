@@ -59,10 +59,19 @@
         justify-content: space-between;
     }
 
+    .checkbox-column {
+        width: 50px;
+    }
+
     td img {
         height: 100px;
         width: 100px;
     }
+
+    .batchStatusForm {
+        float:right;
+    }
+    
 </style>
 
 <div class="filter">
@@ -87,9 +96,21 @@
     <div>Total Rows: <span id="rowCount">@Model.Detections.Count</span></div>
 </div>
 
+<form method="post" id="batchStatusForm" class="batchStatusForm" style="display:none;" asp-page-handler="UpdateStatus">
+    <input type="hidden" name="selectedIds" id="selectedIds" />
+    <select class="status-select" name="NewStatus">
+        <option value="To be validated">To be validated</option>
+        <option value="Alert">Alert</option>
+        <option value="Not Alert">Not Alert</option>
+    </select>
+    <button type="submit">Update Selected</button>
+</form>
+
 <table class="table" id="detectionsTable">
     <thead>
         <tr>
+            <th class="checkbox-column">Select</th>
+
             <th>Id</th>
             <th>CameraSerial</th>
             <th>Detection</th>
@@ -102,6 +123,9 @@
         @foreach (var detection in Model.Detections!)
         {
             <tr>
+                <td class="checkbox-column">
+                    <input type="checkbox" class="row-checkbox" value="@detection.Id" />
+                </td>
                 <td>@detection.Id</td>
                 <td>@detection.Camera</td>
                 <td>@detection.Label</td>
@@ -146,6 +170,19 @@
 </div>
 
 <script>
+
+    const checkboxes = document.querySelectorAll('.row-checkbox');
+
+    checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', () => {
+            const selectedIds = Array.from(checkboxes)
+                .filter(cb => cb.checked)
+                .map(cb => cb.value);
+
+            document.getElementById('selectedIds').value = selectedIds.join(',');
+            document.getElementById('batchStatusForm').style.display = selectedIds.length > 0 ? 'block' : 'none';
+        });
+    });
 
     function resetFilters() {
         var date = new Date().toISOString().split('T')[0];

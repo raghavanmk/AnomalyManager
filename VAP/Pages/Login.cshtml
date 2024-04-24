@@ -1,0 +1,67 @@
+﻿@page
+@model VAP.Pages.LoginModel
+@{
+}
+
+<style>
+    /* Form styles */
+    form {
+        margin-bottom: 20px;
+        padding: 20px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        background-color: #f9f9f9;
+    }
+
+        form input[type="text"],
+        form input[type="password"] {
+            width: 100%;
+            margin-bottom: 10px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+        }
+
+        form button {
+            width: 100%;
+            padding: 10px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+    /* Signup form specific styles */
+    .signup-form {
+        max-width: 300px;
+        margin: auto;
+    }
+
+        .signup-form input[type="text"],
+        .signup-form input[type="password"] {
+            margin-top: 10px;
+        }
+
+    /* Login form specific styles */
+    .login-form {
+        max-width: 300px;
+        margin: auto;
+    }
+
+        .login-form input[type="text"],
+        .login-form input[type="password"] {
+            margin-top: 10px;
+        }
+
+</style>
+
+
+<div class="login-form">
+    <h3 style="text-align: center;">Login</h3>
+    <form method="post" onsubmit="(e)=>e.preventDefault();">
+        <input type="text" name="LoginUsername" placeholder="Username" /><br />
+        <input type="password" name="LoginPassword" placeholder="Password" /><br />
+        <button type="submit" name="LoginButton">Login</button>
+    </form>
+</div>
