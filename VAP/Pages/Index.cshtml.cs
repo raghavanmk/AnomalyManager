@@ -62,9 +62,9 @@ namespace VAP.Pages
         }
         public async Task<IActionResult> OnPostUpdateStatusAsync(int? detectionId, string? selectedIds)
         {
-            string query = "UPDATE PPEDetectionTest SET DetectionCheck = @Status WHERE DetectionId = @DetectionId";
+            string query = $"UPDATE {configuration["DbTable:Detections"]} SET DetectionCheck = @Status WHERE DetectionId = @DetectionId";
 
-            string nullQuery = "UPDATE PPEDetectionTest SET DetectionCheck = NULL WHERE DetectionId = @DetectionId";
+            string nullQuery = $"UPDATE {configuration["DbTable:Detections"]} SET DetectionCheck = NULL WHERE DetectionId = @DetectionId";
 
             var detectionIds = !string.IsNullOrEmpty(selectedIds)
      ? selectedIds.Split(',').Select(int.Parse).ToArray()
@@ -100,7 +100,7 @@ namespace VAP.Pages
         private async Task LogActivityAsync(string? user, string action, int[]? detectionIds)
         {
             string connectionString = configuration["ConnectionString:Sql"]!;
-            string query = "INSERT INTO ActivityLog (Timestamp, [User], Action, DetectionIds) VALUES (@Timestamp, @User, @Action, @DetectionIds)";
+            string query = $"INSERT INTO {configuration["DbTable:Logs"]} (Timestamp, [User], Action, DetectionIds) VALUES (@Timestamp, @User, @Action, @DetectionIds)";
             try
             {
 
@@ -126,7 +126,7 @@ namespace VAP.Pages
         {
             var FetchedDetections = new List<Detection>();
 
-            string query = $"SELECT CameraSerial, Class, DetectionId, DetectionUnixEpoch, DetectionDateTime, DetectionCheck, DetectionImageUrl FROM PPEDetectionTest WHERE CAST(DetectionDateTime as DATE) BETWEEN '{dateFrom}' AND '{dateTo}'";
+            string query = $"SELECT CameraSerial, Class, DetectionId, DetectionUnixEpoch, DetectionDateTime, DetectionCheck, DetectionImageUrl FROM {configuration["DbTable:Detections"]} WHERE CAST(DetectionDateTime as DATE) BETWEEN '{dateFrom}' AND '{dateTo}'";
 
             using (SqlConnection connection = new SqlConnection(configuration["ConnectionString:Sql"]))
             {

@@ -1,0 +1,69 @@
+﻿@page
+@model VAP.Pages.SignupModel
+@{
+}
+
+<style>
+    /* Form styles */
+    form {
+        margin-bottom: 20px;
+        padding: 20px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        background-color: #f9f9f9;
+    }
+
+        form input[type="text"],
+        form input[type="password"] {
+            width: 100%;
+            margin-bottom: 10px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+        }
+
+        form button {
+            width: 100%;
+            padding: 10px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+    .signup-form {
+        max-width: 300px;
+        margin: auto;
+    }
+
+        .signup-form input[type="text"],
+        .signup-form input[type="password"] {
+            margin-top: 10px;
+        }
+
+    .validation-summary-errors {
+        margin-bottom: 20px;
+        padding: 10px;
+        color: #f00;
+    }
+</style>
+
+@section scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
+
+<div>
+    <partial name="_ValidationSummary" />
+</div>
+
+
+<div class="signup-form">
+    <h3 style="text-align: center;">Sign Up</h3>
+    <form method="post">
+        <input type="text" name="SignupUsername" placeholder="Username" /><br />
+        <input type="password" name="SignupPassword" placeholder="Password" /><br />
+        <button type="submit" name="SignupButton">Sign Up</button>
+    </form>
+    <p style="text-align: center;">Already have an account? <a href="/Login">Login</a></p>
+</div>

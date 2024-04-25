@@ -16,12 +16,6 @@ namespace VAP.Pages
         }
 
         [BindProperty(SupportsGet = true)]
-        public string SignupUsername { get; set; }
-
-        [BindProperty(SupportsGet = true)]
-        public string SignupPassword { get; set; }
-
-        [BindProperty(SupportsGet = true)]
         public string LoginUsername { get; set; }
 
         [BindProperty(SupportsGet = true)]
@@ -29,30 +23,18 @@ namespace VAP.Pages
 
         public IActionResult OnGet()
         {
+            ModelState.Clear();
             return Page();
-        }
-
-        public IActionResult OnPostSignup()
-        {
-            using (var connection = new SqlConnection(configuration["ConnectionString:Sql"]))
-            {
-                connection.Open();
-                var command = new SqlCommand("INSERT INTO Users (Username, Password) VALUES (@Username, @Password)", connection);
-                command.Parameters.AddWithValue("@Username", SignupUsername);
-                command.Parameters.AddWithValue("@Password", SignupPassword);
-                command.ExecuteNonQuery();
-            }
-
-            return RedirectToPage("/Index");
         }
 
         public async Task<IActionResult> OnPostAsync()
         {
+            ModelState.Clear();
 
             using (var connection = new SqlConnection(configuration["ConnectionString:Sql"]))
             {
                 connection.Open();
-                var command = new SqlCommand("SELECT * FROM [User] WHERE Username = @Username AND Password = @Password", connection);
+                var command = new SqlCommand($"SELECT * FROM {configuration["DbTable:Users"]} WHERE Username = @Username AND Password = @Password", connection);
                 command.Parameters.AddWithValue("@Username", LoginUsername);
                 command.Parameters.AddWithValue("@Password", LoginPassword);
 
@@ -79,5 +61,7 @@ namespace VAP.Pages
             return Page();
 
         }
+
+      
     }
 }

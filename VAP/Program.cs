@@ -40,7 +40,7 @@ app.UseAuthorization();
 // Redirect to login page if user is not authenticated
 app.Use(async (context, next) =>
 {
-    if (!context.User.Identity.IsAuthenticated && !context.Request.Path.StartsWithSegments("/Login"))
+    if (!context.User.Identity.IsAuthenticated && !context.Request.Path.StartsWithSegments("/Login") && !context.Request.Path.StartsWithSegments("/Signup"))
     {
         context.Response.Redirect("/Login");
         return;

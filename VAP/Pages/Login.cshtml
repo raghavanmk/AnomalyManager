@@ -1,10 +1,7 @@
 ﻿@page
 @model VAP.Pages.LoginModel
-@{
-}
 
 <style>
-    /* Form styles */
     form {
         margin-bottom: 20px;
         padding: 20px;
@@ -13,48 +10,49 @@
         background-color: #f9f9f9;
     }
 
-        form input[type="text"],
-        form input[type="password"] {
-            width: 100%;
-            margin-bottom: 10px;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 3px;
-        }
-
-        form button {
-            width: 100%;
-            padding: 10px;
-            background-color: #007bff;
-            color: #fff;
-            border: none;
-            border-radius: 3px;
-            cursor: pointer;
-        }
-
-    /* Signup form specific styles */
-    .signup-form {
-        max-width: 300px;
-        margin: auto;
+    form input[type="text"],
+    form input[type="password"] {
+        width: 100%;
+        margin-bottom: 10px;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 3px;
     }
 
-        .signup-form input[type="text"],
-        .signup-form input[type="password"] {
-            margin-top: 10px;
-        }
+    form button {
+        width: 100%;
+        padding: 10px;
+        background-color: #007bff;
+        color: #fff;
+        border: none;
+        border-radius: 3px;
+        cursor: pointer;
+    }
 
-    /* Login form specific styles */
     .login-form {
         max-width: 300px;
         margin: auto;
     }
 
-        .login-form input[type="text"],
-        .login-form input[type="password"] {
-            margin-top: 10px;
-        }
+    .login-form input[type="text"],
+    .login-form input[type="password"] {
+        margin-top: 10px;
+    }
 
+    .validation-summary-errors {
+        margin-bottom: 20px;
+        padding: 10px;
+        color: #f00;
+    }
 </style>
+
+@section scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
+
+<div>
+    <partial name="_ValidationSummary" />
+</div>
 
 
 <div class="login-form">
@@ -64,4 +62,7 @@
         <input type="password" name="LoginPassword" placeholder="Password" /><br />
         <button type="submit" name="LoginButton">Login</button>
     </form>
+    <p style="text-align: center;">
+        Don't have an account? <a asp-page="/Signup">Signup</a>
+    </p>
 </div>
