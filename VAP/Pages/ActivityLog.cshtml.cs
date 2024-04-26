@@ -26,10 +26,12 @@ namespace VAP.Pages
         {
             var activityLogs = new List<ActivityLog>();
 
-            using (var connection = new SqlConnection(configuration["ConnectionString:Sql"]))
+            using (var connection = new SqlConnection(configuration["ConnectionString:SqlServer"]))
             {
                 await connection.OpenAsync();
-                var query = "SELECT * FROM ActivityLog ORDER BY Timestamp DESC";
+                // var query = "SELECT * FROM ActivityLog ORDER BY Timestamp DESC";
+                var query = $"SELECT l.*, u.Username FROM {configuration["DbTable:Log"]} l INNER JOIN {configuration["DbTable:User"]} u ON l.UserID = u.UserID ORDER BY l.Timestamp DESC";
+
                 using (var command = new SqlCommand(query, connection))
                 {
                     using (var reader = await command.ExecuteReaderAsync())
@@ -38,11 +40,12 @@ namespace VAP.Pages
                         {
                             var activityLog = new ActivityLog
                             {
-                                Id = Convert.ToInt32(reader["Id"]),
+                                UserID = Convert.ToInt32(reader["UserID"]),
+                                LogID = Convert.ToInt32(reader["LogID"]),
                                 Timestamp = Convert.ToDateTime(reader["Timestamp"]),
-                                User = reader["User"].ToString(),
+                                Username = reader["Username"].ToString(),
                                 Action = reader["Action"].ToString(),
-                                DetectionIds = reader["DetectionIds"].ToString()
+                                Detections = reader["Detections"].ToString()
                             };
                             activityLogs.Add(activityLog);
                         }

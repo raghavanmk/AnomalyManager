@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Data.SqlClient;
+using System.Security.Claims;
 using VAP.Models;
 
 
@@ -62,9 +63,9 @@ namespace VAP.Pages
         }
         public async Task<IActionResult> OnPostUpdateStatusAsync(int? detectionId, string? selectedIds)
         {
-            string query = $"UPDATE {configuration["DbTable:Detections"]} SET DetectionCheck = @Status WHERE DetectionId = @DetectionId";
+            string query = $"UPDATE {configuration["DbTable:Detection"]} SET DetectionCheck = @Status WHERE DetectionId = @DetectionId";
 
-            string nullQuery = $"UPDATE {configuration["DbTable:Detections"]} SET DetectionCheck = NULL WHERE DetectionId = @DetectionId";
+            string nullQuery = $"UPDATE {configuration["DbTable:Detection"]} SET DetectionCheck = NULL WHERE DetectionId = @DetectionId";
 
             var detectionIds = !string.IsNullOrEmpty(selectedIds)
      ? selectedIds.Split(',').Select(int.Parse).ToArray()
@@ -72,7 +73,7 @@ namespace VAP.Pages
 
             int? status = NewStatus == "Alert" ? 1 : (NewStatus == "Not Alert" ? 0 : null);
 
-            using (SqlConnection connection = new SqlConnection(configuration["ConnectionString:Sql"]))
+            using (SqlConnection connection = new SqlConnection(configuration["ConnectionString:SqlServer"]))
             {
                 await connection.OpenAsync();
 
@@ -92,15 +93,17 @@ namespace VAP.Pages
                 detectionStore.UpdateStatus(dId, NewStatus!);
             }
 
-            await LogActivityAsync(User.Identity!.Name!, NewStatus!, detectionIds);
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+
+            await LogActivityAsync(int.Parse(userIdClaim!.Value), NewStatus!, detectionIds);
 
             return RedirectToPage("Index");
         }
 
-        private async Task LogActivityAsync(string? user, string action, int[]? detectionIds)
+        private async Task LogActivityAsync(int userId, string action, int[]? detectionIds)
         {
-            string connectionString = configuration["ConnectionString:Sql"]!;
-            string query = $"INSERT INTO {configuration["DbTable:Logs"]} (Timestamp, [User], Action, DetectionIds) VALUES (@Timestamp, @User, @Action, @DetectionIds)";
+            string connectionString = configuration["ConnectionString:SqlServer"]!;
+            string query = $"INSERT INTO {configuration["DbTable:Log"]} (Timestamp, UserID, Action, Detections) VALUES (@Timestamp, @UserID, @Action, @Detections)";
             try
             {
 
@@ -108,9 +111,9 @@ namespace VAP.Pages
                 {
                     SqlCommand command = new SqlCommand(query, connection);
                     command.Parameters.AddWithValue("@Timestamp", DateTime.UtcNow);
-                    command.Parameters.AddWithValue("@User", user);
+                    command.Parameters.AddWithValue("@UserID", userId);
                     command.Parameters.AddWithValue("@Action", action);
-                    command.Parameters.AddWithValue("@DetectionIds", string.Join(",", detectionIds!));
+                    command.Parameters.AddWithValue("@Detections", string.Join(",", detectionIds!));
 
                     await connection.OpenAsync();
                     await command.ExecuteNonQueryAsync();
@@ -126,9 +129,9 @@ namespace VAP.Pages
         {
             var FetchedDetections = new List<Detection>();
 
-            string query = $"SELECT CameraSerial, Class, DetectionId, DetectionUnixEpoch, DetectionDateTime, DetectionCheck, DetectionImageUrl FROM {configuration["DbTable:Detections"]} WHERE CAST(DetectionDateTime as DATE) BETWEEN '{dateFrom}' AND '{dateTo}'";
+            string query = $"SELECT CameraSerial, Class, DetectionId, DetectionUnixEpoch, DetectionDateTime, DetectionCheck, DetectionImageUrl FROM {configuration["DbTable:Detection"]} WHERE CAST(DetectionDateTime as DATE) BETWEEN '{dateFrom}' AND '{dateTo}'";
 
-            using (SqlConnection connection = new SqlConnection(configuration["ConnectionString:Sql"]))
+            using (SqlConnection connection = new SqlConnection(configuration["ConnectionString:SqlServer"]))
             {
                 SqlCommand command = new SqlCommand(query, connection);
 

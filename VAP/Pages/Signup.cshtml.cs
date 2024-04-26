@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Data.SqlClient;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace VAP.Pages
 {
@@ -39,17 +41,19 @@ namespace VAP.Pages
                 return Page();
             }
 
-            InsertUser(SignupUsername, SignupPassword);
+            string encryptedPassword = EncryptPassword(SignupPassword);
+
+            InsertUser(SignupUsername, encryptedPassword);
 
             return RedirectToPage("/Login");
         }
 
         private bool IsUsernameExists(string username)
         {
-            using (var connection = new SqlConnection(configuration["ConnectionString:Sql"]))
+            using (var connection = new SqlConnection(configuration["ConnectionString:SqlServer"]))
             {
                 connection.Open();
-                var command = new SqlCommand($"SELECT COUNT(*) FROM {configuration["DbTable:Users"]} WHERE Username = @Username", connection);
+                var command = new SqlCommand($"SELECT COUNT(*) FROM {configuration["DbTable:User"]} WHERE Username = @Username", connection);
                 command.Parameters.AddWithValue("@Username", username);
                 return (int)command.ExecuteScalar() > 0;
             }
@@ -57,13 +61,35 @@ namespace VAP.Pages
 
         private void InsertUser(string username, string password)
         {
-            using (var connection = new SqlConnection(configuration["ConnectionString:Sql"]))
+            using (var connection = new SqlConnection(configuration["ConnectionString:SqlServer"]))
             {
                 connection.Open();
-                var command = new SqlCommand($"INSERT INTO {configuration["DbTable:Users"]} (Username, Password) VALUES (@Username, @Password)", connection);
+                var command = new SqlCommand($"INSERT INTO {configuration["DbTable:User"]} (Username, Password) VALUES (@Username, @Password)", connection);
                 command.Parameters.AddWithValue("@Username", username);
                 command.Parameters.AddWithValue("@Password", password);
                 command.ExecuteNonQuery();
+            }
+        }
+
+        private string EncryptPassword(string password)
+        {
+            using (Aes aesAlg = Aes.Create())
+            {
+                aesAlg.Key = Encoding.UTF8.GetBytes(configuration["EncryptionKey"]);
+                aesAlg.IV = new byte[16];
+
+                ICryptoTransform encryptor = aesAlg.CreateEncryptor(aesAlg.Key, aesAlg.IV);
+                using (MemoryStream msEncrypt = new MemoryStream())
+                {
+                    using (CryptoStream csEncrypt = new CryptoStream(msEncrypt, encryptor, CryptoStreamMode.Write))
+                    {
+                        using (StreamWriter swEncrypt = new StreamWriter(csEncrypt))
+                        {
+                            swEncrypt.Write(password);
+                        }
+                    }
+                    return Convert.ToBase64String(msEncrypt.ToArray());
+                }
             }
         }
     }

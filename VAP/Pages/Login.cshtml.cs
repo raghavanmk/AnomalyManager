@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Data.SqlClient;
 using System.Security.Claims;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace VAP.Pages
 {
@@ -30,29 +32,35 @@ namespace VAP.Pages
         public async Task<IActionResult> OnPostAsync()
         {
             ModelState.Clear();
-
-            using (var connection = new SqlConnection(configuration["ConnectionString:Sql"]))
+            using (var connection = new SqlConnection(configuration["ConnectionString:SqlServer"]))
             {
                 connection.Open();
-                var command = new SqlCommand($"SELECT * FROM {configuration["DbTable:Users"]} WHERE Username = @Username AND Password = @Password", connection);
+                var command = new SqlCommand($"SELECT * FROM {configuration["DbTable:User"]} WHERE Username = @Username", connection);
                 command.Parameters.AddWithValue("@Username", LoginUsername);
-                command.Parameters.AddWithValue("@Password", LoginPassword);
 
                 using (var reader = command.ExecuteReader())
                 {
                     if (reader.Read())
                     {
-                        var claims = new[]
+                        int userId = (int)reader["UserID"];
+                        string storedEncryptedPassword = reader["Password"].ToString();
+                        string storedPassword = DecryptPassword(storedEncryptedPassword!);
+
+                        if (storedPassword == LoginPassword)
                         {
-                             new Claim(ClaimTypes.Name, LoginUsername)
-                         };
+                            var claims = new[]
+                            {
+                                 new Claim(ClaimTypes.Name, LoginUsername),
+                                 new Claim(ClaimTypes.NameIdentifier, userId.ToString())
+                             };
 
-                        var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+                            var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
 
-                        var authProperties = new AuthenticationProperties();
+                            var authProperties = new AuthenticationProperties();
 
-                        HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(claimsIdentity), authProperties).Wait();
-                        return RedirectToPage("/Index");
+                            await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(claimsIdentity), authProperties);
+                            return RedirectToPage("/Index");
+                        }
                     }
                 }
             }
@@ -62,6 +70,25 @@ namespace VAP.Pages
 
         }
 
-      
+        private string DecryptPassword(string encryptedPassword)
+        {
+            using (Aes aesAlg = Aes.Create())
+            {
+                aesAlg.Key = Encoding.UTF8.GetBytes(configuration["EncryptionKey"]);
+                aesAlg.IV = new byte[16];
+
+                ICryptoTransform decryptor = aesAlg.CreateDecryptor(aesAlg.Key, aesAlg.IV);
+                using (MemoryStream msDecrypt = new MemoryStream(Convert.FromBase64String(encryptedPassword)))
+                {
+                    using (CryptoStream csDecrypt = new CryptoStream(msDecrypt, decryptor, CryptoStreamMode.Read))
+                    {
+                        using (StreamReader srDecrypt = new StreamReader(csDecrypt))
+                        {
+                            return srDecrypt.ReadToEnd();
+                        }
+                    }
+                }
+            }
+        }
     }
 }
